@@ -1,0 +1,38 @@
+{
+    "name": "UoM EEEN10242 C programming container",
+	"build": {
+        "dockerfile": "./eeen10242_dockerfile",
+        "context": "."
+    },
+    "capAdd": ["SYS_PTRACE"],
+    "securityOpt": ["seccomp=unconfined"],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack",
+				"ms-vscode.cpptools-themes",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cmake-tools",
+				"ms-vscode-remote.remote-containers",
+				"GitHub.vscode-pull-request-github",
+				"github.codespaces",		
+                "eamodio.gitlens",
+                "streetsidesoftware.code-spell-checker",
+				"formulahendry.code-runner"
+			]
+		}
+	},
+	"settings": {
+	    "terminal.integrated.defaultProfile.linux": "bash",
+		"terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+	    }
+	},
+    "postAttachCommand": ["git", "config", "--global", "--add", "safe.directory", "${containerWorkspaceFolder}"],
+	"forwardPorts": [],
+	"remoteUser": "vscode"
+}
