@@ -47,18 +47,15 @@ int main(void) {
 //READING MAP SECTION
 //Define test variable
 char Test; //extra variable to test for extra letters, just to give scanf a place to store it
-int pos = 0;
-char ch;
-int row_read = 0;
-int column_read = 0;
 
     // read the map and store it into the array, display error if incorrect letter is in the map
 
-    while ((ch = getc(fptr)) != EOF){
+    for (int i =0; i < NUMROWS; i++){
+        for (int q = 0; q < NUMCOLS; q++){
 
+          fscanf(fptr, "%c ", &map[i] [q]);  //store the map in a 2D array, by nature of Scanf it ignores any extra spaces or lines between letters (whitepsace)
           
-          
-          if (ch != 'B' && ch != 'W' && ch != 'L' && ch != 'D' && ch != 'V'){  //check for invalid symbols, or missing symbols, and display error if detected
+          if (map[i][q] != 'B' && map[i][q] != 'W' && map[i][q] != 'L' && map[i][q] != 'D' && map[i][q] != 'V'){  //check for invalid symbols, or missing symbols, and display error if detected
             printf("Error!"); 
             fclose(fptr);
             exit(EXIT_FAILURE);        //close file and return exit status 1
@@ -70,55 +67,24 @@ int column_read = 0;
             exit(EXIT_FAILURE);      //close file and return exit status 1 and display error
             }
 
-            map[row_read][column_read] = ch;
+            
 
-            pos++;
-            ch = getc(fptr);
+            if (i == 8 && q == 8) {          //check for any extra letters outside the 9 by 9 grid, by making sure we get an EOF at the end
+                fscanf(fptr, "%c", &Test);
 
-            if (ch == ' '){
-                column_read++;
-
-                if (column_read > 8){
-                    printf("Error!");
+                    if (!feof(fptr)){
+                    printf("Error!"); 
                     fclose(fptr); 
-                    exit(15);
-                }
-                pos++;
-            }  
+                    exit(EXIT_FAILURE);     //close file and return exit status 1 and display error
+                    }
+                }       
 
-            if (ch == '\n'){
-                if (column_read < 8){
-                    printf("Error!");
-                    fclose(fptr); 
-                    exit(17);
-                }
-                column_read = 0;
-                row_read++;
-                if (row_read > 8){
-                    printf("Error!");
-                    fclose(fptr); 
-                    exit(20);
-                }
-                pos++;
-            } 
-
-            if (column_read == 8 && row_read == 8 && ch == EOF){
-                break;
-
-            }
-
-
-            if  (ch != '\n' && ch != ' '){
-
-                printf("Error!");
-                fclose(fptr); 
-                exit(25);
-            }
                 
         
         } //end of row
 
-    
+        //next row
+    }
 
     fclose(fptr); //close file
 
