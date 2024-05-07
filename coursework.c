@@ -54,67 +54,65 @@ int column_read = 0;
 
     // read the map and store it into the array, display error if incorrect letter is in the map
 
-    while ((ch = getc(fptr)) != EOF){
+    while ((ch = getc(fptr))){
 
-          
+        //Check if we got a correct letter:
           
           if (ch != 'B' && ch != 'W' && ch != 'L' && ch != 'D' && ch != 'V'){  //check for invalid symbols, or missing symbols, and display error if detected
             printf("Error!"); 
             fclose(fptr);
-            exit(EXIT_FAILURE);        //close file and return exit status 1
+            exit(EXIT_FAILURE);        //close file and return exit status 1 and display error
           }
 
-            if (ferror(fptr)) { //Check if Scanf returns an error when reading
+            if (ferror(fptr)) { //Check if getc returns an error when reading
             printf("Error!");
             fclose(fptr); 
             exit(EXIT_FAILURE);      //close file and return exit status 1 and display error
             }
 
-            map[row_read][column_read] = ch;
+            map[row_read][column_read] = ch; //store letter into the map
 
-            pos++;
-            ch = getc(fptr);
 
-            if (ch == ' '){
+            //check if we have either a space or new line in the correct positions:
+
+            pos++; //move on to next position, space between letters, new line at the end of row
+            ch = getc(fptr); //get character
+
+            if (ch == ' '){     //if character is a space, means same row next cell, if space at the end of row display error
                 column_read++;
 
-                if (column_read > 8){
-                    printf("Error!");
-                    fclose(fptr); 
-                    exit(15);
+                if (column_read > 8){  //if column_read > 8, there is an extra letter, or extra space at the end of the row so call error
+                    printf("Error!");             //note that I am assuming that there should NOT be a space at the end of each row, and considering that an error                        
+                    fclose(fptr);                 //(and the auto correcter agrees with this)
+                    exit(EXIT_FAILURE);
                 }
                 pos++;
             }  
 
-            if (ch == '\n'){
-                if (column_read < 8){
-                    printf("Error!");
-                    fclose(fptr); 
-                    exit(17);
-                }
-                column_read = 0;
-                row_read++;
-                if (row_read > 8){
-                    printf("Error!");
-                    fclose(fptr); 
-                    exit(20);
-                }
-                pos++;
-            } 
+              else if (ch == '\n'){
+                  if (column_read < 8){   //if column_read < 8, there is a missing letter in a row so call error
+                      fclose(fptr); 
+                      exit(EXIT_FAILURE);
+                  }
+                  column_read = 0;  //go back to column 0 in map variable
+                  row_read++;  //go to next row
+                  if (row_read > 8){    //if row_read > 8, there is an extra row so call error
+                      printf("Error!");
+                      fclose(fptr); 
+                      exit(EXIT_FAILURE);
+                  }
+                  pos++;
+              }
 
-            if (column_read == 8 && row_read == 8 && ch == EOF){
-                break;
+                else if (column_read == 8 && row_read == 8 && ch == EOF){  //detect end of map, at the right place
+                    break;
+              }
 
-            }
-
-
-            if  (ch != '\n' && ch != ' '){
-
-                printf("Error!");
-                fclose(fptr); 
-                exit(25);
-            }
-                
+                  else  {  //if character is not a space or new line, there is an incorrect character or a missing space/line, or EOF too early so call error
+                      printf("Error!");
+                      fclose(fptr); 
+                      exit(EXIT_FAILURE);
+                  }
         
         } //end of row
 
@@ -149,9 +147,9 @@ int column_read = 0;
 
     // Perform random walks and calculate results
 
-    int row_results[NUMROWS][NUMCOLS][NUMWALKS];  //create array to store all the results of success or failure for every run, for every cell
-    int row_steps[NUMROWS][NUMCOLS][NUMWALKS];   //create array to store the number of steps for every run
-    double chances[NUMROWS][NUMCOLS];    //array containing the chances of success for every cell
+    int Cell_results[NUMROWS][NUMCOLS][NUMWALKS];  //create array to store all the results of success or failure for every run, for every cell
+    int Cell_steps[NUMROWS][NUMCOLS][NUMWALKS];   //create array to store the number of steps for every run for every cell
+    double probability[NUMROWS][NUMCOLS];    //array containing the chances of success for every cell
     double meanstep[NUMROWS][NUMCOLS];   //array containing mean path length for every cell
     double standDev[NUMROWS][NUMCOLS];    //array for standard deviation for ever cell 
 
@@ -163,7 +161,7 @@ for (int Row = 0; Row < NUMROWS; Row++){ //set row
 
     for (int col = 0; col < NUMCOLS; col++){ //set cell to run simulation
 
-        simulate_cell(map, Row, col, row_results[Row][col], row_steps[Row][col]); //run the simulation 1000 times per cell
+        simulate_cell(map, Row, col, Cell_results[Row][col], Cell_steps[Row][col]); //run the simulation 1000 times per cell
 
 
     }
@@ -174,10 +172,10 @@ for (int Row = 0; Row < NUMROWS; Row++){ //set row
 
     for (int Row = 0; Row < NUMROWS; Row++){ // Run the simulation Row by Row
 
-    Find_suc(row_results[Row], chances[Row]);  // calculate the Chances of escape for each cell in a row
+    Find_suc(Cell_results[Row], probability[Row]);  // calculate the Chances of escape for each cell in a row
 
-    Mean_path(row_results[Row], row_steps[Row], meanstep[Row]);   // calculate the mean path length  for each cell in a row
-    Find_standDev(row_results[Row], row_steps[Row], meanstep[Row], standDev[Row]);    // calculate the standard deviation of path length for each cell in a row
+    Mean_path(Cell_results[Row], Cell_steps[Row], meanstep[Row]);   // calculate the mean path length  for each cell in a row
+    Find_standDev(Cell_results[Row], Cell_steps[Row], meanstep[Row], standDev[Row]);    // calculate the standard deviation of path length for each cell in a row
 
     }
 
@@ -190,7 +188,12 @@ for (int Row = 0; Row < NUMROWS; Row++){ //set row
     for (int i =0; i < NUMROWS; i++){
         for (int q = 0; q < NUMCOLS; q++){
 
-          printf("%6.2f ", chances[i][q]);  //print every cell in a row
+          if(q == NUMCOLS - 1){      //special case for end of line so no Space
+            printf("%6.2f", probability[i][q]);
+
+          }else{
+          printf("%6.2f ", probability[i][q]);  //print every cell in a row, with space after. 6.2 to allow 2 DP and alignment
+          }
 
         
  
@@ -201,7 +204,7 @@ for (int Row = 0; Row < NUMROWS; Row++){ //set row
 
 
 
-    printf("\nMean path length:\n");  //Header for mean path length
+    printf("\nMean path length:\n");  //Print header for mean path length
     for (int i =0; i < NUMROWS; i++){   
         for (int q = 0; q < NUMCOLS; q++){
 
@@ -217,7 +220,7 @@ for (int Row = 0; Row < NUMROWS; Row++){ //set row
         printf("\n");   //enter to next line for column
     }
 
-    printf("\nStandard deviation of path length:\n");  //Header for path standard devation
+    printf("\nStandard deviation of path length:\n");  //print header for path standard deviation
     for (int i =0; i < NUMROWS; i++){
 
         for (int q = 0; q < NUMCOLS; q++){
@@ -241,9 +244,12 @@ for (int Row = 0; Row < NUMROWS; Row++){ //set row
     return 0;
 }
 
+
+
+//Defining the functions called
+
+
 void simulate_cell(char map[NUMCOLS][NUMROWS], int inrow, int incol, int *result, int *steps){
-
-
 
 // 1000 repeats from starting position
         for (int q = 0; q < NUMWALKS; q++){
@@ -257,16 +263,16 @@ void simulate_cell(char map[NUMCOLS][NUMROWS], int inrow, int incol, int *result
 
           for (step; step < NUMSTEP; step++){
 
-            //ensure default result is 0 (if nothing happens after 10 steps)
-            *result = 0;
+            //ensure default result is 2 (if nothing happens after 10 steps)
+            *result = 2;
 
             //check position before motion, incase of death or success
-            if (position == 'W' || position == 'D' || position == 'V'){
-                *result = 2;
+            if (position == 'W' || position == 'D' || position == 'V'){  //incase of death 
+                *result = 0;
                 break;
             }
 
-            if (position == 'B'){
+            if (position == 'B'){   //incase of success
                 *result = 1;
                 break;
             }
@@ -338,7 +344,7 @@ void simulate_cell(char map[NUMCOLS][NUMROWS], int inrow, int incol, int *result
 
           //check position incase if 10th step was a success or a fail, if L remain at default.
             if (position == 'W' || position == 'D' || position == 'V'){
-                *result = 2;
+                *result = 0;
             }
             if (position == 'B'){
                 *result = 1;
@@ -398,7 +404,7 @@ void Mean_path(int results[NUMCOLS][NUMWALKS], int steps[NUMCOLS][NUMWALKS], dou
       total++;
       }
   }
-    if (total == 0){  //for cells without successful walks, mean steps = 0
+    if (total == 0){  //for cells with unsuccessful walks, mean steps = 0
       *meanpath = 0.00;
       meanpath++;
 
@@ -429,7 +435,7 @@ void Find_standDev(int results[NUMCOLS][NUMWALKS], int steps[NUMCOLS][NUMWALKS],
       }
     }
 
-    if (total == 0){    //for cells without successful walks StandDev = 0
+    if (total == 0){    //for cells with unsuccessful walks StandDev = 0
       *StandDev = 0.00;
       StandDev++;
 
